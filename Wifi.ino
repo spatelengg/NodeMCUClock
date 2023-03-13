@@ -84,12 +84,12 @@ DateTime MyDateAndTime;
  
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define LEDCLOCK_PIN        D4
-#define LEDDOWNLIGHT_PIN    D3
-#define ledPerSegment       2
+#define LEDCLOCK_PIN        D8
+#define LEDDOWNLIGHT_PIN    D6
+#define ledPerSegment       10
  
 // How many NeoPixels are attached to the Arduino?
-#define LEDCLOCK_COUNT 46  // This should be = 23 * ledPerSegment
+#define LEDCLOCK_COUNT 230  // This should be = 23 * ledPerSegment
 #define LEDDOWNLIGHT_COUNT 12
 
 Adafruit_NeoPixel stripClock      (LEDCLOCK_COUNT    , LEDCLOCK_PIN,      NEO_GRB + NEO_KHZ800);
@@ -131,6 +131,7 @@ void setup(void){
   });
 
   server.on("/setTime", [](){
+    //Set clock time    
     String response = "";
     if(server.hasArg("year")){
       
@@ -145,7 +146,7 @@ void setup(void){
       String timeV = String(MyDateAndTime.Hour) + ":" + String(MyDateAndTime.Minute) + ":" + String(MyDateAndTime.Second);
       Serial.println("DateTime is: " + date + " " + timeV ); 
       
-      //Clock.write(MyDateAndTime);
+      Clock.write(MyDateAndTime);
 
       response = "Time is set. to " + String(MyDateAndTime.Year);
     }
@@ -153,12 +154,13 @@ void setup(void){
       response = "Time parameter missing!";
     }
 
-    //Set clock time    
+   
     server.send(200, "text/html", response);
     delay(1000);
   });
 
   server.on("/setColors", [](){
+    
     String response = "";
     if(server.hasArg("cmr")){
       _cfg.colorModeRandom = server.arg("cmr") == "true";
@@ -170,14 +172,14 @@ void setup(void){
         _cfg.colors[i] = (long)(server.arg("c" + String(i)).toInt());
         Serial.println(String(_cfg.colors[i] ));         
       }
-      //Clock.write(MyDateAndTime);
+       
       response = "Color config set";
     }
     else{
       response = "Color parameters missing!";
     }
  
-    //Set clock time    
+       
     server.send(200, "text/html", response);
     delay(1000);
   });
@@ -195,14 +197,14 @@ void setup(void){
         _cfg.brightnessValueRange[i] = (long)(server.arg("bvr" + String(i)).toInt());
         _cfg.boxBrightnessValueRange[i] = (long)(server.arg("bbvr" + String(i)).toInt());
       }
-      //Clock.write(MyDateAndTime);
+      
       response = "Brightness config set";
     }
     else{
       response = "Brightness parameters missing!";
     }
  
-    //Set clock time    
+       
     server.send(200, "text/html", response);
     delay(100);
   });
@@ -224,7 +226,7 @@ void setup(void){
     readings[thisReading] = 0;
   }
    
-  //Clock.begin();
+  Clock.begin();
   stripClock.begin();
   stripClock.show();
   stripClock.setBrightness(10);
@@ -237,7 +239,7 @@ void setup(void){
  
 
 bool wifiConnected = false; 
-bool alternate=false;
+
 void loop(void){
   checkWiFiStatus();
   if(wifiConnected) {  
@@ -245,13 +247,17 @@ void loop(void){
   }
 
   // Ask the clock for the data.
-  //MyDateAndTime = Clock.read();
+  MyDateAndTime = Clock.read();
+  //String date = String(MyDateAndTime.Year) + "/" + String(MyDateAndTime.Month) + "/" + String(MyDateAndTime.Day);
+  //String timeV = String(MyDateAndTime.Hour) + ":" + String(MyDateAndTime.Minute) + ":" + String(MyDateAndTime.Second);
+  //Serial.println("DateTime is: " + date + " " + timeV ); 
+  
   setClockColors();
   setBrightness();
   displayTheTime();
   displayBoxLight();
-  alternate = !alternate;
-  delay(500);
+  
+  //delay(500);
 } 
  
 
@@ -261,7 +267,7 @@ void setBrightness(){
     //Record a reading from the light sensor and add it to the array
      
     //currentSensorValue = 50;
-    currentSensorValue =  analogRead(A0); //get an average light level from previouse set of samples
+    currentSensorValue = 1024 - analogRead(A0); //get an average light level from previouse set of samples
     readings[readIndex] = currentSensorValue;
     total += readings[readIndex];
     
@@ -273,10 +279,19 @@ void setBrightness(){
       // ...wrap around to the beginning:
       readIndex = 0;
     }
-    avgSensorValue = total/numReadings;     
-    
-    _cfg.brightnessValue = map(avgSensorValue, _cfg.sensorValueRange[0], _cfg.sensorValueRange[1], _cfg.brightnessValueRange[2], _cfg.brightnessValueRange[1]);     
-    _cfg.boxBrightnessValue = map(avgSensorValue, _cfg.sensorValueRange[0], _cfg.sensorValueRange[1], _cfg.boxBrightnessValueRange[2], _cfg.boxBrightnessValueRange[1]);     
+    avgSensorValue = total/numReadings;
+    if(avgSensorValue <= _cfg.sensorValueRange[1]){
+      _cfg.brightnessValue = map(avgSensorValue, _cfg.sensorValueRange[0], _cfg.sensorValueRange[1], _cfg.brightnessValueRange[0], _cfg.brightnessValueRange[1]);     
+      _cfg.boxBrightnessValue = map(avgSensorValue, _cfg.sensorValueRange[0], _cfg.sensorValueRange[1], _cfg.boxBrightnessValueRange[0], _cfg.boxBrightnessValueRange[1]); 
+    }
+    else if(avgSensorValue < _cfg.sensorValueRange[2]){
+      _cfg.brightnessValue = map(avgSensorValue, _cfg.sensorValueRange[1], _cfg.sensorValueRange[2], _cfg.brightnessValueRange[1], _cfg.brightnessValueRange[2]);     
+      _cfg.boxBrightnessValue = map(avgSensorValue, _cfg.sensorValueRange[1], _cfg.sensorValueRange[2], _cfg.boxBrightnessValueRange[1], _cfg.boxBrightnessValueRange[2]); 
+    } 
+    else {
+      _cfg.brightnessValue = map(avgSensorValue, _cfg.sensorValueRange[2], _cfg.sensorValueRange[3], _cfg.brightnessValueRange[2], _cfg.brightnessValueRange[3]);     
+      _cfg.boxBrightnessValue = map(avgSensorValue, _cfg.sensorValueRange[2], _cfg.sensorValueRange[3], _cfg.boxBrightnessValueRange[2], _cfg.boxBrightnessValueRange[3]); 
+    }        
   }
   
   //Serial.print("Sensor Value: Raw=" + String(currentSensorValue) + " Avg=" + String(avgSensorValue));
@@ -285,9 +300,10 @@ void setBrightness(){
 
 void displayBoxLight(){
   stripDownlighter.clear();
-  if(_cfg.boxBlink && alternate){
-    stripDownlighter.fill(_cfg.boxColor, 0, 4);
-    stripDownlighter.fill(_cfg.boxColor, 6, LEDDOWNLIGHT_COUNT);        
+  if(_cfg.boxBlink && MyDateAndTime.Second % 2 == 0 ){
+    stripDownlighter.fill(_cfg.boxColor, 0, 2);
+    stripDownlighter.fill(_cfg.boxColor, 3, 6);
+    stripDownlighter.fill(_cfg.boxColor, 10, 2);        
   }
   else{
     stripDownlighter.fill(_cfg.boxColor, 0, LEDDOWNLIGHT_COUNT);     
@@ -335,10 +351,13 @@ void displayTheTime(){
   //Serial.println( String(secondHourDigit) + String(firstHourDigit) + ":" + String(secondMinuteDigit) + String(firstMinuteDigit)) ;
 }
 
+int colorSetAt = 0; 
 void setClockColors(){
-    if(_cfg.colorModeRandom){
+  int minCounter = MyDateAndTime.Minute % 5;
+    if(_cfg.colorModeRandom && colorSetAt != minCounter){
       _cfg.colorSelection[0] = _cfg.colors[random(0, colorCount)];
       _cfg.colorSelection[1] = _cfg.colors[random(0, colorCount)];
+      colorSetAt = minCounter;
     }
 }
 
@@ -360,6 +379,7 @@ void checkWiFiStatus(){
   }  
   else{
     Serial.println(".");
+    delay(100);
   }
 }
 
