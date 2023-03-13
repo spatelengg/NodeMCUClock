@@ -29,8 +29,7 @@ function init(){
 
     var elTime = $('<fieldset><legend>Time</legend></fieldset>')
             .append('<div>Clock Time: <span id="spnClockTime"></span><div>')
-            .append('<div>New Time: <input type="datetime-local" id="newTime">')
-            .append('<button id="btnSetTime">Set Time</button>');
+            .append('<div>New Time: <input type="datetime-local" id="newTime">') ;
 
     var elColor = $('<fieldset><legend>Colors</legend></fieldset>')
             .append('<div>Random Color: <input type="checkbox" id="chkRandomColor" ></div>')
@@ -44,18 +43,19 @@ function init(){
             .append('<div id="divAutoBright">' + 
                 '<div>Sensor Range</div><div><div class="slider-range" id="sliderSensorRange"></div></div>' + 
                 '<div>Clock Brightness</div><div class="slider-range" id="sliderClockRange"></div>' + 
-                '<div>Box Brightness</div><div class="slider-range" id="sliderBoxRange"></div>' + 
+                '<div>Box Brightness</div><div class="slider-range" id="sliderBoxRange"></div>' +                  
             '</div>')
             .append('<div id="divManualBright">' + 
-                    '<div>Clock Brightness</div><div><div class="slider" id="sliderClock"></div></div>' +
-                    '<div>Box Brightness</div><div><div class="slider" id="sliderBox"></div></div>' +
+                    '<p>Clock Brightness</p><input id="sliderClock" type="range" min="1" max="200">' +
+                    '<p>Box Brightness</p><input id="sliderBox" type="range" min="1" max="200">' +
                 '</div>')
-            .append('<div>Blink Box: <input type="checkbox" id="chkBoxBlink" ></div>')
+            .append('<br /><div>Blink Box: <input type="checkbox" id="chkBoxBlink" ></div>')
             .append('<button id="btnSetBrightness">Set Brightness</button>');
 
 
-    var el1 = $('<div><button id="btnRefresh">Refresh</button></div>' + 
-                '<div><button id="btnSaveCfg">Save Config</button></div>');
+    var el1 = $('<div class="buttons"><button id="btnRefresh">Refresh</button> ' + 
+                     '<button id="btnSaveCfg">Save Config</button></div>' + 
+                '</div>');
 
     body.append(elTime);
     body.append(elColor);
@@ -74,15 +74,15 @@ function init(){
     elBrightness.find('#sliderSensorRange').slider('option', 'min', 0);
     elBrightness.find('#sliderSensorRange').slider('option', 'max', 1024);
 
-    elBrightness.find('.slider').slider({       
-        min: 0,
-        max: 200 ,
-        value: 50
-    });
+    // elBrightness.find('.slider').slider({       
+    //     min: 0,
+    //     max: 200 ,
+    //     value: 50
+    // });
     
     
     var sec = 0;
-    $('#btnSetTime').on('click', function(){
+    $('#newTime').on('change', function(){
         var newTime = $('#newTime').val();
         if(!newTime)
             return;
@@ -103,8 +103,10 @@ function init(){
          })
         .done(function(m){
             //alert(m);
+            getConfig();
         });
     });
+    
 
     $('#btnSetColor').on('click', function(){
         var data = {};
@@ -123,15 +125,18 @@ function init(){
          })
         .done(function(m){
             //alert(m);
+            getConfig();
         });
     });
 
+
+    
     $("#btnSetBrightness").on('click', function(){
         var data = {};
         data.ba = $('#chkAutoBright').prop('checked');
         data.bb = $('#chkBoxBlink').prop('checked');
-        data.bv = $('#sliderClock').slider('value');
-        data.bbv = $('#sliderBox').slider('value');
+        data.bv = $('#sliderClock').val();
+        data.bbv = $('#sliderBox').val();
 
         var svr = $('#sliderSensorRange').slider('values');
         data['svr0'] = 0;
@@ -157,7 +162,7 @@ function init(){
             data:data
          })
         .done(function(m){
-            //alert(m);
+            //getConfig();
         });
     });
 
@@ -225,6 +230,7 @@ function updateConfig(msg) {
 
     
     $('#spnClockTime').text(msg.clockTime);
+     
     $('#chkRandomColor').prop('checked', msg.colorModeRandom).change();
     
     $('#hourColor').wheelColorPicker('setValue',getColorString(msg.colorSelection[0]));
@@ -235,8 +241,11 @@ function updateConfig(msg) {
     $('#chkBoxBlink').prop('checked', msg.boxBlink).change();
     $( "#sliderSensorRange" ).slider( "values", msg.sensorValueRange);
     $( "#sliderClockRange" ).slider( "values", msg.brightnessValueRange);
-    $( "#sliderClock" ).slider( "value", msg.brightnessValue);
-    $( "#sliderBox" ).slider( "value", msg.boxBrightnessValue);
+    
+    //$( "#sliderClock" ).slider( "value", msg.brightnessValue);
+    //$( "#sliderBox" ).slider( "value", msg.boxBrightnessValue);
+    $( "#sliderClock" ).val(  msg.brightnessValue);
+    $( "#sliderBox" ).val(  msg.boxBrightnessValue);
 
 
     Colors = msg.colors;
