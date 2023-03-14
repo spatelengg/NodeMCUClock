@@ -33,7 +33,7 @@ struct Config {
           , brightnessValue(50)
           , boxBrightnessValue(50)
           , boxBlink(true)
-          , colorModeRandom(false)
+          , colorModeRandom(true)
           , boxColor(0xFFF1E6)
           , colorSelection{0xFF0000,0x00FF00}
           , colors{
@@ -156,8 +156,7 @@ void setup(void){
 
    
     server.send(200, "text/html", response);
-    delay(1000);
-  });
+ });
 
   server.on("/setColors", [](){
     
@@ -178,10 +177,9 @@ void setup(void){
     else{
       response = "Color parameters missing!";
     }
- 
        
     server.send(200, "text/html", response);
-    delay(1000);
+    
   });
 
   server.on("/setBrightness",[](){
@@ -206,7 +204,7 @@ void setup(void){
  
        
     server.send(200, "text/html", response);
-    delay(100);
+     
   });
 
   server.on("/saveConfig", [](){
@@ -268,6 +266,9 @@ void setBrightness(){
      
     //currentSensorValue = 50;
     currentSensorValue = 1024 - analogRead(A0); //get an average light level from previouse set of samples
+    if(currentSensorValue == 0){
+      currentSensorValue  = 1;
+    }
     readings[readIndex] = currentSensorValue;
     total += readings[readIndex];
     
@@ -353,7 +354,7 @@ void displayTheTime(){
 
 int colorSetAt = 0; 
 void setClockColors(){
-  int minCounter = MyDateAndTime.Minute % 5;
+  int minCounter = MyDateAndTime.Minute / 5;
     if(_cfg.colorModeRandom && colorSetAt != minCounter){
       _cfg.colorSelection[0] = _cfg.colors[random(0, colorCount)];
       _cfg.colorSelection[1] = _cfg.colors[random(0, colorCount)];
