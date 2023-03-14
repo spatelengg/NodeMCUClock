@@ -67,7 +67,7 @@ function init(){
 
     elBrightness.find('.slider-range').slider({
         range:true,
-        min: 0,
+        min: 10,
         max: 200,
         values: [50,150]
     });
@@ -145,13 +145,13 @@ function init(){
         data['svr3'] = 1024;
 
         var bvr = $('#sliderClockRange').slider('values');
-        data['bvr0'] = 0;
+        data['bvr0'] = 10;
         data['bvr1'] = bvr[0];
         data['bvr2'] = bvr[1];
         data['bvr3'] = 200;
 
         var bbvr = $('#sliderBoxRange').slider('values');
-        data['bbvr0'] = 0;
+        data['bbvr0'] = 10;
         data['bbvr1'] = bbvr[0];
         data['bbvr2'] = bbvr[1];
         data['bbvr3'] = 200;
@@ -239,8 +239,9 @@ function updateConfig(msg) {
     
     $('#chkAutoBright').prop('checked', msg.brightnessAuto).change();
     $('#chkBoxBlink').prop('checked', msg.boxBlink).change();
-    $( "#sliderSensorRange" ).slider( "values", msg.sensorValueRange);
-    $( "#sliderClockRange" ).slider( "values", msg.brightnessValueRange);
+    $( "#sliderSensorRange" ).slider( "values", [msg.sensorValueRange[1], msg.sensorValueRange[2]]);
+    $( "#sliderClockRange" ).slider( "values", [msg.brightnessValueRange[1],msg.brightnessValueRange[2]]);
+    $( "#sliderBoxRange" ).slider( "values", [msg.boxBrightnessValueRange[1],msg.boxBrightnessValueRange[2]]);
     
     //$( "#sliderClock" ).slider( "value", msg.brightnessValue);
     //$( "#sliderBox" ).slider( "value", msg.boxBrightnessValue);
